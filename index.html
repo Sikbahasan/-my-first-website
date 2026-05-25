@@ -2,428 +2,710 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Physics Tracker - ফোন লগইন</title>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>🎥 ফিজিক্স ট্র্যাকার | এক লিস্ট, ইউটিউব প্লেয়ার</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}body{background:#0a0c12;color:#fff;padding:20px}.container{max-width:500px;margin:auto;background:#1e2a3a;border-radius:32px;padding:24px}.input-group{margin:16px 0}input,button{width:100%;padding:12px;border-radius:40px;border:none}input{background:#2c3e50;color:#fff}button{background:#2ecc71;color:#000;font-weight:bold;cursor:pointer}.hidden{display:none}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 10% 20%, #0a1f2a, #030c12);
+            font-family: 'Segoe UI', 'Hind Siliguri', system-ui, sans-serif;
+            color: #f0f3fa;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        .glass-header {
+            background: rgba(15, 25, 35, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 60px;
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(46, 204, 113, 0.3);
+            animation: fadeInDown 0.6s ease;
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 {
+            background: linear-gradient(135deg, #fff, #2ecc71);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 1.7rem;
+        }
+        button {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #2ecc71;
+        }
+        button:hover {
+            background: #2ecc71;
+            color: #000;
+            box-shadow: 0 0 15px #2ecc71;
+            transform: scale(1.02);
+        }
+        .reset-btn { border-color: #e74c3c; color: #e74c3c; }
+        .reset-btn:hover { background: #e74c3c; color: #fff; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.6s ease;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stat-card {
+            background: rgba(20, 30, 45, 0.6);
+            backdrop-filter: blur(8px);
+            border-radius: 32px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(46,204,113,0.3);
+            transition: 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-8px);
+            border-color: #2ecc71;
+            background: rgba(30, 45, 65, 0.8);
+        }
+        .stat-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #2ecc71);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .player-section {
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: none;
+            animation: slideDown 0.5s ease;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        #ytFrame {
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 24px;
+            overflow: hidden;
+        }
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.8rem;
+            margin-top: 1rem;
+        }
+        .video-card {
+            background: rgba(25, 35, 50, 0.7);
+            backdrop-filter: blur(4px);
+            border-radius: 28px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+        }
+        .video-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: #2ecc71;
+            box-shadow: 0 20px 35px rgba(46,204,113,0.25);
+        }
+        .thumb {
+            position: relative;
+            aspect-ratio: 16/9;
+            background: #000;
+        }
+        .thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s;
+        }
+        .video-card:hover .thumb img {
+            transform: scale(1.05);
+        }
+        .video-number {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        .new-tag {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #f39c12;
+            color: #000;
+            padding: 2px 10px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.7; transform: scale(0.95);}
+            70% { opacity: 1; transform: scale(1.05);}
+            100% { opacity: 0.7; transform: scale(0.95);}
+        }
+        .done-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(46,204,113,0.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .info { padding: 1rem; }
+        .video-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background: #2c3e50;
+            height: 6px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            height: 6px;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.22, 0.97, 0.36, 1);
+        }
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .note-btn {
+            background: rgba(243,156,18,0.2);
+            border: 1px solid #f39c12;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #f39c12;
+        }
+        .note-btn:hover {
+            background: #f39c12;
+            color: #000;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #1e2a3a;
+            border-radius: 32px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            margin: 1rem 0;
+            border-radius: 60px;
+            border: none;
+            background: #2c3e50;
+            color: white;
+        }
+        @media (max-width: 700px) {
+            .stats { grid-template-columns: repeat(2,1fr); }
+            h1 { font-size: 1.2rem; }
+        }
+        .error-msg {
+            background: #e74c3c;
+            color: white;
+            padding: 10px;
+            border-radius: 40px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
-<div id="loginUI" class="container">
-    <h2>📞 ফোন নম্বর দিন</h2>
-    <input type="tel" id="phone" placeholder="01xxxxxxxxx বা 018xxxxxxxx"><br>
-    <button id="sendOtp">OTP পাঠান</button>
-    <div id="otpDiv" class="hidden">
-        <input type="text" id="otp" placeholder="6 ডিজিট OTP"><br>
-        <button id="verifyOtp">লগইন করুন</button>
+<canvas id="particleCanvas"></canvas>
+<div class="container">
+    <div class="glass-header">
+        <h1>✨ @classofphysics • ইউটিউব প্লেয়ার (সর্বোচ্চ প্রগ্রেস)</h1>
+        <div>
+            <button id="syncBtn">⟳ সিঙ্ক ভিডিও</button>
+            <button id="resetAllBtn" class="reset-btn">🗑️ রিসেট প্রগ্রেস</button>
+        </div>
     </div>
-    <div id="nameDiv" class="hidden">
-        <input type="text" id="fullName" placeholder="আপনার নাম"><br>
-        <button id="saveName">নাম সংরক্ষণ করুন</button>
+
+    <div class="stats">
+        <div class="stat-card"><div class="stat-number" id="totalVideos">0</div><div>মোট ভিডিও</div></div>
+        <div class="stat-card"><div class="stat-number" id="watchedVideos">0</div><div>দেখা হয়েছে</div></div>
+        <div class="stat-card"><div class="stat-number" id="remainingVideos">0</div><div>বাকি আছে</div></div>
+        <div class="stat-card"><div class="stat-number" id="progressPercent">0%</div><div>অগ্রগতি</div></div>
     </div>
-    <div id="msg"></div>
+
+    <!-- প্লেয়ার সেকশন (উপরে) -->
+    <div id="playerSection" class="player-section">
+        <div class="player-header">
+            <strong id="playingTitle">—</strong>
+            <button id="playerNoteBtn" style="background:#f39c12; color:#000;">📓 নোট যোগ</button>
+        </div>
+        <div id="ytFrame"></div>
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+            <button id="nextBtn">▶ পরের ভিডিও</button>
+            <span id="nextHint" style="color:#aaa;"></span>
+        </div>
+    </div>
+
+    <div id="errorBox" class="error-msg" style="display: none;"></div>
+    <div id="videoGrid" class="video-grid"></div>
 </div>
-<div id="appUI" class="hidden">
-    <h2>🎓 স্বাগতম, <span id="userName"></span></h2>
-    <button id="logoutBtn">লগআউট</button>
-    <div id="videoList"></div>
+
+<div id="noteModal" class="modal">
+    <div class="modal-content">
+        <h3>📌 Google Drive লিংক দিন</h3>
+        <input type="url" id="noteLink" placeholder="https://drive.google.com/...">
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button id="saveNoteBtn">সংরক্ষণ</button>
+            <button id="closeNoteBtn" style="background:#555;">বাতিল</button>
+        </div>
+    </div>
 </div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDTnTStePWbfrdWd8vttQ5DfPRglTWqnAw",
-        authDomain: "physics-tracker-ce3ff.firebaseapp.com",
-        projectId: "physics-tracker-ce3ff",
-        storageBucket: "physics-tracker-ce3ff.firebasestorage.app",
-        messagingSenderId: "683659010664",
-        appId: "1:683659010664:web:40981f93aa9d88f7c651dd"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const YT_API_KEY = 'AIzaSyDV7KTjAa1F5YFqoZNCa7mBk2jWe6Ki5lA';
+    const CHANNEL_ID = 'UC4Z3GRWMIG-ybJ_yCppP8dA';
     
-    let confirmation = null;
-    let currentUser = null;
-    
-    function normalizePhone(p) {
-        let x = p.trim().replace(/\s/g,'');
-        if(x.match(/^01[3-9]\d{8}$/)) return '+88'+x;
-        if(x.match(/^\+8801[3-9]\d{8}$/)) return x;
-        if(x.match(/^8801[3-9]\d{8}$/)) return '+'+x;
-        return null;
+    let videos = [], progress = {}, notes = {};
+    let currentIdx = -1;
+    let ytPlayer = null, ytReady = false, pendingVideo = null;
+    let trackInterval = null;
+    let newIds = new Set();
+
+    // DOM
+    const gridDiv = document.getElementById('videoGrid');
+    const playerDiv = document.getElementById('playerSection');
+    const playingTitle = document.getElementById('playingTitle');
+    const playerNoteBtn = document.getElementById('playerNoteBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const nextHint = document.getElementById('nextHint');
+    const syncBtn = document.getElementById('syncBtn');
+    const resetBtn = document.getElementById('resetAllBtn');
+    const totalSpan = document.getElementById('totalVideos');
+    const watchedSpan = document.getElementById('watchedVideos');
+    const remainingSpan = document.getElementById('remainingVideos');
+    const percentSpan = document.getElementById('progressPercent');
+    const errorBox = document.getElementById('errorBox');
+
+    function showError(msg) {
+        errorBox.innerText = msg;
+        errorBox.style.display = 'block';
+        setTimeout(() => errorBox.style.display = 'none', 5000);
     }
-    
-    document.getElementById('sendOtp').onclick = async () => {
-        let raw = document.getElementById('phone').value;
-        let phone = normalizePhone(raw);
-        if(!phone) { document.getElementById('msg').innerText = 'সঠিক নম্বর দিন (017xxxxxxxx)'; return; }
-        document.getElementById('msg').innerText = 'OTP পাঠানো হচ্ছে...';
-        try {
-            let recaptcha = new firebase.auth.RecaptchaVerifier('sendOtp', {size:'invisible'});
-            confirmation = await auth.signInWithPhoneNumber(phone, recaptcha);
-            document.getElementById('otpDiv').classList.remove('hidden');
-            document.getElementById('msg').innerText = 'OTP এসেছে? কোড দিন।';
-        } catch(e) { document.getElementById('msg').innerText = e.message; }
-    };
-    
-    document.getElementById('verifyOtp').onclick = async () => {
-        let code = document.getElementById('otp').value;
-        if(!code) return;
-        try {
-            let result = await confirmation.confirm(code);
-            let user = result.user;
-            let doc = await db.collection('users').doc(user.uid).get();
-            if(doc.exists) {
-                currentUser = user;
-                showApp(doc.data().name, doc.data().role);
-            } else {
-                currentUser = user;
-                document.getElementById('nameDiv').classList.remove('hidden');
-                document.getElementById('msg').innerText = 'নাম দিন';
+
+    // সর্বোচ্চ প্রগ্রেস আপডেট (শুধু বাড়ে, কমে না)
+    function updateMaxProgress(videoId, newPercent) {
+        let old = progress[videoId] || 0;
+        if (newPercent > old) {
+            progress[videoId] = newPercent;
+            saveProgress();
+            updateStats();
+            // UI আপডেট
+            const fill = document.getElementById(`fill-${videoId}`);
+            if (fill) fill.style.width = newPercent + '%';
+            const pctSpan = document.getElementById(`pct-${videoId}`);
+            if (pctSpan) pctSpan.innerText = newPercent + '%';
+            if (newPercent >= 100) {
+                const thumb = document.getElementById(`thumb-${videoId}`);
+                if (thumb && !thumb.querySelector('.done-overlay')) {
+                    let ov = document.createElement('div');
+                    ov.className = 'done-overlay';
+                    ov.innerText = '✓ সম্পন্ন';
+                    thumb.appendChild(ov);
+                }
             }
-        } catch(e) { document.getElementById('msg').innerText = e.message; }
-    };
-    
-    document.getElementById('saveName').onclick = async () => {
-        let name = document.getElementById('fullName').value.trim();
-        if(!name) return;
-        await db.collection('users').doc(currentUser.uid).set({ name: name, role: 'user', phone: currentUser.phoneNumber });
-        showApp(name, 'user');
-    };
-    
-    function showApp(name, role) {
-        document.getElementById('loginUI').classList.add('hidden');
-        document.getElementById('appUI').classList.remove('hidden');
-        document.getElementById('userName').innerText = name;
-        if(role === 'admin') alert('আপনি অ্যাডমিন। সব ইউজার দেখতে পাবেন।');
-        // এখানে ভিডিও লোড করার ফাংশন লাগবে (আগের মতো)
-        document.getElementById('videoList').innerHTML = '<p>ভিডিও লোড করতে সিঙ্ক বাটন লাগবে। উপরের কোডে সেটা যোগ করতে হবে। তবে এখন টেস্ট লগইন ওটিপি কাজ করছে।</p>';
+        }
     }
-    
-    document.getElementById('logoutBtn').onclick = () => { auth.signOut(); location.reload(); };
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="bn">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Physics Tracker - ফোন লগইন</title>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}body{background:#0a0c12;color:#fff;padding:20px}.container{max-width:500px;margin:auto;background:#1e2a3a;border-radius:32px;padding:24px}.input-group{margin:16px 0}input,button{width:100%;padding:12px;border-radius:40px;border:none}input{background:#2c3e50;color:#fff}button{background:#2ecc71;color:#000;font-weight:bold;cursor:pointer}.hidden{display:none}
-    </style>
-</head>
-<body>
-<div id="loginUI" class="container">
-    <h2>📞 ফোন নম্বর দিন</h2>
-    <input type="tel" id="phone" placeholder="01xxxxxxxxx বা 018xxxxxxxx"><br>
-    <button id="sendOtp">OTP পাঠান</button>
-    <div id="otpDiv" class="hidden">
-        <input type="text" id="otp" placeholder="6 ডিজিট OTP"><br>
-        <button id="verifyOtp">লগইন করুন</button>
-    </div>
-    <div id="nameDiv" class="hidden">
-        <input type="text" id="fullName" placeholder="আপনার নাম"><br>
-        <button id="saveName">নাম সংরক্ষণ করুন</button>
-    </div>
-    <div id="msg"></div>
-</div>
-<div id="appUI" class="hidden">
-    <h2>🎓 স্বাগতম, <span id="userName"></span></h2>
-    <button id="logoutBtn">লগআউট</button>
-    <div id="videoList"></div>
-</div>
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDTnTStePWbfrdWd8vttQ5DfPRglTWqnAw",
-        authDomain: "physics-tracker-ce3ff.firebaseapp.com",
-        projectId: "physics-tracker-ce3ff",
-        storageBucket: "physics-tracker-ce3ff.firebasestorage.app",
-        messagingSenderId: "683659010664",
-        appId: "1:683659010664:web:40981f93aa9d88f7c651dd"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    
-    let confirmation = null;
-    let currentUser = null;
-    
-    function normalizePhone(p) {
-        let x = p.trim().replace(/\s/g,'');
-        if(x.match(/^01[3-9]\d{8}$/)) return '+88'+x;
-        if(x.match(/^\+8801[3-9]\d{8}$/)) return x;
-        if(x.match(/^8801[3-9]\d{8}$/)) return '+'+x;
-        return null;
+
+    function loadLocal() {
+        const p = localStorage.getItem('physics_progress_max');
+        if(p) progress = JSON.parse(p);
+        const n = localStorage.getItem('physics_notes');
+        if(n) notes = JSON.parse(n);
     }
-    
-    document.getElementById('sendOtp').onclick = async () => {
-        let raw = document.getElementById('phone').value;
-        let phone = normalizePhone(raw);
-        if(!phone) { document.getElementById('msg').innerText = 'সঠিক নম্বর দিন (017xxxxxxxx)'; return; }
-        document.getElementById('msg').innerText = 'OTP পাঠানো হচ্ছে...';
-        try {
-            let recaptcha = new firebase.auth.RecaptchaVerifier('sendOtp', {size:'invisible'});
-            confirmation = await auth.signInWithPhoneNumber(phone, recaptcha);
-            document.getElementById('otpDiv').classList.remove('hidden');
-            document.getElementById('msg').innerText = 'OTP এসেছে? কোড দিন।';
-        } catch(e) { document.getElementById('msg').innerText = e.message; }
-    };
-    
-    document.getElementById('verifyOtp').onclick = async () => {
-        let code = document.getElementById('otp').value;
-        if(!code) return;
-        try {
-            let result = await confirmation.confirm(code);
-            let user = result.user;
-            let doc = await db.collection('users').doc(user.uid).get();
-            if(doc.exists) {
-                currentUser = user;
-                showApp(doc.data().name, doc.data().role);
-            } else {
-                currentUser = user;
-                document.getElementById('nameDiv').classList.remove('hidden');
-                document.getElementById('msg').innerText = 'নাম দিন';
+    function saveProgress() { localStorage.setItem('physics_progress_max', JSON.stringify(progress)); }
+    function saveNotes() { localStorage.setItem('physics_notes', JSON.stringify(notes)); }
+
+    function updateStats() {
+        const total = videos.length;
+        let done = videos.filter(v => (progress[v.id] || 0) >= 100).length;
+        let pct = total ? Math.round((done/total)*100) : 0;
+        totalSpan.innerText = total;
+        watchedSpan.innerText = done;
+        remainingSpan.innerText = total - done;
+        percentSpan.innerText = pct + '%';
+    }
+
+    function renderGrid() {
+        if(!videos.length) {
+            gridDiv.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem;">🎬 ভিডিও লোড হয়নি। "সিঙ্ক ভিডিও" ক্লিক করুন</div>';
+            return;
+        }
+        let html = '';
+        videos.forEach((v, idx) => {
+            let pct = progress[v.id] || 0;
+            let isNew = newIds.has(v.id);
+            let hasNote = !!notes[v.id];
+            html += `
+                <div class="video-card" data-idx="${idx}" data-vid="${v.id}">
+                    <div class="thumb" id="thumb-${v.id}">
+                        <img src="${v.thumb}" loading="lazy">
+                        <span class="video-number">${idx+1}</span>
+                        ${isNew ? '<span class="new-tag">🆕 নতুন</span>' : ''}
+                        ${pct >= 100 ? '<div class="done-overlay">✓ সম্পন্ন</div>' : ''}
+                    </div>
+                    <div class="info">
+                        <div class="video-title">${escapeHtml(v.title)}</div>
+                        <div class="progress-bar"><div class="progress-fill" id="fill-${v.id}" style="width:${pct}%"></div></div>
+                        <div class="card-footer">
+                            <span id="pct-${v.id}">${pct}%</span>
+                            <button class="note-btn" data-vid="${v.id}">${hasNote ? '📄 নোট আছে' : '📎 নোট যোগ'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        gridDiv.innerHTML = html;
+        document.querySelectorAll('.video-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if(e.target.classList.contains('note-btn')) return;
+                let idx = parseInt(card.dataset.idx);
+                if(!isNaN(idx)) playVideo(idx);
+            });
+            let btn = card.querySelector('.note-btn');
+            if(btn) {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    let vid = btn.dataset.vid;
+                    openNoteModal(vid);
+                });
             }
-        } catch(e) { document.getElementById('msg').innerText = e.message; }
-    };
-    
-    document.getElementById('saveName').onclick = async () => {
-        let name = document.getElementById('fullName').value.trim();
-        if(!name) return;
-        await db.collection('users').doc(currentUser.uid).set({ name: name, role: 'user', phone: currentUser.phoneNumber });
-        showApp(name, 'user');
-    };
-    
-    function showApp(name, role) {
-        document.getElementById('loginUI').classList.add('hidden');
-        document.getElementById('appUI').classList.remove('hidden');
-        document.getElementById('userName').innerText = name;
-        if(role === 'admin') alert('আপনি অ্যাডমিন। সব ইউজার দেখতে পাবেন।');
-        // এখানে ভিডিও লোড করার ফাংশন লাগবে (আগের মতো)
-        document.getElementById('videoList').innerHTML = '<p>ভিডিও লোড করতে সিঙ্ক বাটন লাগবে। উপরের কোডে সেটা যোগ করতে হবে। তবে এখন টেস্ট লগইন ওটিপি কাজ করছে।</p>';
+        });
     }
-    
-    document.getElementById('logoutBtn').onclick = () => { auth.signOut(); location.reload(); };
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="bn">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Physics Tracker - ফোন লগইন</title>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}body{background:#0a0c12;color:#fff;padding:20px}.container{max-width:500px;margin:auto;background:#1e2a3a;border-radius:32px;padding:24px}.input-group{margin:16px 0}input,button{width:100%;padding:12px;border-radius:40px;border:none}input{background:#2c3e50;color:#fff}button{background:#2ecc71;color:#000;font-weight:bold;cursor:pointer}.hidden{display:none}
-    </style>
-</head>
-<body>
-<div id="loginUI" class="container">
-    <h2>📞 ফোন নম্বর দিন</h2>
-    <input type="tel" id="phone" placeholder="01xxxxxxxxx বা 018xxxxxxxx"><br>
-    <button id="sendOtp">OTP পাঠান</button>
-    <div id="otpDiv" class="hidden">
-        <input type="text" id="otp" placeholder="6 ডিজিট OTP"><br>
-        <button id="verifyOtp">লগইন করুন</button>
-    </div>
-    <div id="nameDiv" class="hidden">
-        <input type="text" id="fullName" placeholder="আপনার নাম"><br>
-        <button id="saveName">নাম সংরক্ষণ করুন</button>
-    </div>
-    <div id="msg"></div>
-</div>
-<div id="appUI" class="hidden">
-    <h2>🎓 স্বাগতম, <span id="userName"></span></h2>
-    <button id="logoutBtn">লগআউট</button>
-    <div id="videoList"></div>
-</div>
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDTnTStePWbfrdWd8vttQ5DfPRglTWqnAw",
-        authDomain: "physics-tracker-ce3ff.firebaseapp.com",
-        projectId: "physics-tracker-ce3ff",
-        storageBucket: "physics-tracker-ce3ff.firebasestorage.app",
-        messagingSenderId: "683659010664",
-        appId: "1:683659010664:web:40981f93aa9d88f7c651dd"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    
-    let confirmation = null;
-    let currentUser = null;
-    
-    function normalizePhone(p) {
-        let x = p.trim().replace(/\s/g,'');
-        if(x.match(/^01[3-9]\d{8}$/)) return '+88'+x;
-        if(x.match(/^\+8801[3-9]\d{8}$/)) return x;
-        if(x.match(/^8801[3-9]\d{8}$/)) return '+'+x;
-        return null;
+
+    // নোট মডাল
+    let currentNoteVideo = null;
+    function openNoteModal(vid) {
+        currentNoteVideo = vid;
+        document.getElementById('noteLink').value = notes[vid] || '';
+        document.getElementById('noteModal').style.display = 'flex';
     }
-    
-    document.getElementById('sendOtp').onclick = async () => {
-        let raw = document.getElementById('phone').value;
-        let phone = normalizePhone(raw);
-        if(!phone) { document.getElementById('msg').innerText = 'সঠিক নম্বর দিন (017xxxxxxxx)'; return; }
-        document.getElementById('msg').innerText = 'OTP পাঠানো হচ্ছে...';
-        try {
-            let recaptcha = new firebase.auth.RecaptchaVerifier('sendOtp', {size:'invisible'});
-            confirmation = await auth.signInWithPhoneNumber(phone, recaptcha);
-            document.getElementById('otpDiv').classList.remove('hidden');
-            document.getElementById('msg').innerText = 'OTP এসেছে? কোড দিন।';
-        } catch(e) { document.getElementById('msg').innerText = e.message; }
-    };
-    
-    document.getElementById('verifyOtp').onclick = async () => {
-        let code = document.getElementById('otp').value;
-        if(!code) return;
-        try {
-            let result = await confirmation.confirm(code);
-            let user = result.user;
-            let doc = await db.collection('users').doc(user.uid).get();
-            if(doc.exists) {
-                currentUser = user;
-                showApp(doc.data().name, doc.data().role);
-            } else {
-                currentUser = user;
-                document.getElementById('nameDiv').classList.remove('hidden');
-                document.getElementById('msg').innerText = 'নাম দিন';
+    function closeModal() {
+        document.getElementById('noteModal').style.display = 'none';
+        currentNoteVideo = null;
+    }
+    function saveCurrentNote() {
+        if(currentNoteVideo) {
+            let link = document.getElementById('noteLink').value.trim();
+            if(link) notes[currentNoteVideo] = link;
+            else delete notes[currentNoteVideo];
+            saveNotes();
+            renderGrid();
+            if(currentIdx >=0 && videos[currentIdx] && videos[currentIdx].id === currentNoteVideo) {
+                updatePlayerNoteButton(currentNoteVideo);
             }
-        } catch(e) { document.getElementById('msg').innerText = e.message; }
-    };
-    
-    document.getElementById('saveName').onclick = async () => {
-        let name = document.getElementById('fullName').value.trim();
-        if(!name) return;
-        await db.collection('users').doc(currentUser.uid).set({ name: name, role: 'user', phone: currentUser.phoneNumber });
-        showApp(name, 'user');
-    };
-    
-    function showApp(name, role) {
-        document.getElementById('loginUI').classList.add('hidden');
-        document.getElementById('appUI').classList.remove('hidden');
-        document.getElementById('userName').innerText = name;
-        if(role === 'admin') alert('আপনি অ্যাডমিন। সব ইউজার দেখতে পাবেন।');
-        // এখানে ভিডিও লোড করার ফাংশন লাগবে (আগের মতো)
-        document.getElementById('videoList').innerHTML = '<p>ভিডিও লোড করতে সিঙ্ক বাটন লাগবে। উপরের কোডে সেটা যোগ করতে হবে। তবে এখন টেস্ট লগইন ওটিপি কাজ করছে।</p>';
+        }
+        closeModal();
     }
-    
-    document.getElementById('logoutBtn').onclick = () => { auth.signOut(); location.reload(); };
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="bn">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Physics Tracker - ফোন লগইন</title>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}body{background:#0a0c12;color:#fff;padding:20px}.container{max-width:500px;margin:auto;background:#1e2a3a;border-radius:32px;padding:24px}.input-group{margin:16px 0}input,button{width:100%;padding:12px;border-radius:40px;border:none}input{background:#2c3e50;color:#fff}button{background:#2ecc71;color:#000;font-weight:bold;cursor:pointer}.hidden{display:none}
-    </style>
-</head>
-<body>
-<div id="loginUI" class="container">
-    <h2>📞 ফোন নম্বর দিন</h2>
-    <input type="tel" id="phone" placeholder="01xxxxxxxxx বা 018xxxxxxxx"><br>
-    <button id="sendOtp">OTP পাঠান</button>
-    <div id="otpDiv" class="hidden">
-        <input type="text" id="otp" placeholder="6 ডিজিট OTP"><br>
-        <button id="verifyOtp">লগইন করুন</button>
-    </div>
-    <div id="nameDiv" class="hidden">
-        <input type="text" id="fullName" placeholder="আপনার নাম"><br>
-        <button id="saveName">নাম সংরক্ষণ করুন</button>
-    </div>
-    <div id="msg"></div>
-</div>
-<div id="appUI" class="hidden">
-    <h2>🎓 স্বাগতম, <span id="userName"></span></h2>
-    <button id="logoutBtn">লগআউট</button>
-    <div id="videoList"></div>
-</div>
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDTnTStePWbfrdWd8vttQ5DfPRglTWqnAw",
-        authDomain: "physics-tracker-ce3ff.firebaseapp.com",
-        projectId: "physics-tracker-ce3ff",
-        storageBucket: "physics-tracker-ce3ff.firebasestorage.app",
-        messagingSenderId: "683659010664",
-        appId: "1:683659010664:web:40981f93aa9d88f7c651dd"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    
-    let confirmation = null;
-    let currentUser = null;
-    
-    function normalizePhone(p) {
-        let x = p.trim().replace(/\s/g,'');
-        if(x.match(/^01[3-9]\d{8}$/)) return '+88'+x;
-        if(x.match(/^\+8801[3-9]\d{8}$/)) return x;
-        if(x.match(/^8801[3-9]\d{8}$/)) return '+'+x;
-        return null;
+    function updatePlayerNoteButton(videoId) {
+        if(notes[videoId]) {
+            playerNoteBtn.innerText = '📓 ওপেন নোট';
+            playerNoteBtn.onclick = () => window.open(notes[videoId], '_blank');
+        } else {
+            playerNoteBtn.innerText = '➕ নোট যোগ করুন';
+            playerNoteBtn.onclick = () => openNoteModal(videoId);
+        }
     }
-    
-    document.getElementById('sendOtp').onclick = async () => {
-        let raw = document.getElementById('phone').value;
-        let phone = normalizePhone(raw);
-        if(!phone) { document.getElementById('msg').innerText = 'সঠিক নম্বর দিন (017xxxxxxxx)'; return; }
-        document.getElementById('msg').innerText = 'OTP পাঠানো হচ্ছে...';
-        try {
-            let recaptcha = new firebase.auth.RecaptchaVerifier('sendOtp', {size:'invisible'});
-            confirmation = await auth.signInWithPhoneNumber(phone, recaptcha);
-            document.getElementById('otpDiv').classList.remove('hidden');
-            document.getElementById('msg').innerText = 'OTP এসেছে? কোড দিন।';
-        } catch(e) { document.getElementById('msg').innerText = e.message; }
-    };
-    
-    document.getElementById('verifyOtp').onclick = async () => {
-        let code = document.getElementById('otp').value;
-        if(!code) return;
-        try {
-            let result = await confirmation.confirm(code);
-            let user = result.user;
-            let doc = await db.collection('users').doc(user.uid).get();
-            if(doc.exists) {
-                currentUser = user;
-                showApp(doc.data().name, doc.data().role);
-            } else {
-                currentUser = user;
-                document.getElementById('nameDiv').classList.remove('hidden');
-                document.getElementById('msg').innerText = 'নাম দিন';
+
+    // ইউটিউব প্লেয়ার
+    function buildPlayer(vid) {
+        document.getElementById('ytFrame').innerHTML = '';
+        ytPlayer = new YT.Player('ytFrame', {
+            videoId: vid,
+            width: '100%',
+            height: '100%',
+            playerVars: { autoplay: 1, rel: 0, modestbranding: 1 },
+            events: {
+                onReady: () => {},
+                onStateChange: onPlayerStateChange,
+                onError: (err) => { console.error(err); showError("ভিডিও লোড করতে সমস্যা"); }
             }
-        } catch(e) { document.getElementById('msg').innerText = e.message; }
-    };
-    
-    document.getElementById('saveName').onclick = async () => {
-        let name = document.getElementById('fullName').value.trim();
-        if(!name) return;
-        await db.collection('users').doc(currentUser.uid).set({ name: name, role: 'user', phone: currentUser.phoneNumber });
-        showApp(name, 'user');
-    };
-    
-    function showApp(name, role) {
-        document.getElementById('loginUI').classList.add('hidden');
-        document.getElementById('appUI').classList.remove('hidden');
-        document.getElementById('userName').innerText = name;
-        if(role === 'admin') alert('আপনি অ্যাডমিন। সব ইউজার দেখতে পাবেন।');
-        // এখানে ভিডিও লোড করার ফাংশন লাগবে (আগের মতো)
-        document.getElementById('videoList').innerHTML = '<p>ভিডিও লোড করতে সিঙ্ক বাটন লাগবে। উপরের কোডে সেটা যোগ করতে হবে। তবে এখন টেস্ট লগইন ওটিপি কাজ করছে।</p>';
+        });
     }
-    
-    document.getElementById('logoutBtn').onclick = () => { auth.signOut(); location.reload(); };
+
+    function onPlayerStateChange(event) {
+        if(event.data === YT.PlayerState.PLAYING) {
+            if(trackInterval) clearInterval(trackInterval);
+            trackInterval = setInterval(trackProgress, 4000);
+        } else {
+            clearInterval(trackInterval);
+            trackProgress();
+            if(event.data === YT.PlayerState.ENDED) {
+                let v = videos[currentIdx];
+                if(v) updateMaxProgress(v.id, 100);
+                setTimeout(() => playNext(), 2000);
+            }
+        }
+    }
+
+    function trackProgress() {
+        if(!ytPlayer || currentIdx < 0) return;
+        try {
+            let cur = ytPlayer.getCurrentTime();
+            let dur = ytPlayer.getDuration();
+            if(dur > 0) {
+                let p = Math.floor((cur/dur)*100);
+                if(p > 95) p = 100;
+                let v = videos[currentIdx];
+                if(v) updateMaxProgress(v.id, p);
+            }
+        } catch(e) {}
+    }
+
+    function playVideo(idx) {
+        if(idx < 0 || idx >= videos.length) return;
+        currentIdx = idx;
+        let v = videos[idx];
+        playerDiv.style.display = 'block';
+        playingTitle.innerText = `${idx+1}. ${v.title}`;
+        nextHint.innerText = videos[idx+1] ? `পরের: ${videos[idx+1].title.slice(0,60)}...` : '— শেষ ভিডিও —';
+        updatePlayerNoteButton(v.id);
+        if(ytPlayer && ytPlayer.loadVideoById) {
+            ytPlayer.loadVideoById(v.id);
+        } else if(ytReady) {
+            buildPlayer(v.id);
+        } else {
+            pendingVideo = v.id;
+            showError("প্লেয়ার লোড হচ্ছে, একটু অপেক্ষা করুন...");
+            setTimeout(() => {
+                if(pendingVideo === v.id && !ytReady) {
+                    showError("প্লেয়ার লোড হয়নি। পেজ রিফ্রেশ করুন।");
+                }
+            }, 5000);
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function playNext() {
+        if(currentIdx + 1 < videos.length) playVideo(currentIdx+1);
+        else alert('🎉 আপনি সব ভিডিও দেখে ফেলেছেন!');
+    }
+
+    function resetAll() {
+        if(confirm('সব অগ্রগতি ও নোট রিসেট করবেন?')) {
+            progress = {};
+            notes = {};
+            saveProgress();
+            saveNotes();
+            renderGrid();
+            updateStats();
+            if(ytPlayer) ytPlayer.stopVideo();
+            playerDiv.style.display = 'none';
+            currentIdx = -1;
+        }
+    }
+
+    // ভিডিও ফেচ
+    async function getUploadsPlaylistId() {
+        let url = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${CHANNEL_ID}&key=${YT_API_KEY}`;
+        let res = await fetch(url);
+        let data = await res.json();
+        if(data.error) throw new Error(data.error.message);
+        return data.items[0].contentDetails.relatedPlaylists.uploads;
+    }
+
+    async function fetchAllVideos(plId) {
+        let list = [], pt = '';
+        do {
+            let url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${plId}&key=${YT_API_KEY}${pt ? '&pageToken='+pt : ''}`;
+            let res = await fetch(url);
+            let data = await res.json();
+            if(data.error) throw new Error(data.error.message);
+            (data.items || []).forEach(it => {
+                let title = it.snippet.title;
+                if(title !== 'Private video' && title !== 'Deleted video')
+                    list.push({
+                        id: it.snippet.resourceId.videoId,
+                        title: title,
+                        thumb: it.snippet.thumbnails?.medium?.url || it.snippet.thumbnails?.default?.url || ''
+                    });
+            });
+            pt = data.nextPageToken;
+        } while(pt);
+        list.reverse();
+        return list;
+    }
+
+    async function syncVideos() {
+        syncBtn.disabled = true;
+        syncBtn.innerText = '⏳ লোড হচ্ছে...';
+        try {
+            const plId = await getUploadsPlaylistId();
+            const fresh = await fetchAllVideos(plId);
+            const oldIds = new Set(videos.map(v => v.id));
+            newIds.clear();
+            fresh.forEach(v => { if(!oldIds.has(v.id)) newIds.add(v.id); });
+            videos = fresh;
+            localStorage.setItem('physics_videos_cache', JSON.stringify(videos));
+            renderGrid();
+            updateStats();
+            if(newIds.size) alert(`${newIds.size} টি নতুন ভিডিও পাওয়া গেছে!`);
+        } catch(err) {
+            showError('সিঙ্ক ব্যর্থ: ' + err.message);
+        } finally {
+            syncBtn.disabled = false;
+            syncBtn.innerText = '⟳ সিঙ্ক ভিডিও';
+        }
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+    }
+
+    // পার্টিকেল অ্যানিমেশন (মাউস ট্রেইল)
+    const canvas = document.getElementById('particleCanvas');
+    let ctx = canvas.getContext('2d');
+    let particles = [];
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    document.addEventListener('mousemove', (e) => {
+        for(let i=0;i<2;i++) {
+            particles.push({
+                x: e.clientX + (Math.random()-0.5)*12,
+                y: e.clientY + (Math.random()-0.5)*12,
+                radius: Math.random()*4+2,
+                vx: (Math.random()-0.5)*2,
+                vy: (Math.random()-0.5)*2 - 0.5,
+                life: 1
+            });
+        }
+        if(particles.length > 120) particles = particles.slice(-100);
+    });
+    function drawParticles() {
+        if(!ctx) return;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        for(let i=0;i<particles.length;i++) {
+            let p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 0.01;
+            if(p.life <= 0.02 || p.x<0 || p.x>canvas.width || p.y<0 || p.y>canvas.height) {
+                particles.splice(i,1);
+                i--;
+                continue;
+            }
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius * p.life, 0, Math.PI*2);
+            ctx.fillStyle = `rgba(46, 204, 113, ${p.life*0.5})`;
+            ctx.fill();
+        }
+        requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
+
+    window.onYouTubeIframeAPIReady = () => {
+        ytReady = true;
+        if(pendingVideo) {
+            buildPlayer(pendingVideo);
+            pendingVideo = null;
+        }
+    };
+
+    syncBtn.onclick = syncVideos;
+    resetBtn.onclick = resetAll;
+    nextBtn.onclick = playNext;
+    document.getElementById('saveNoteBtn').onclick = saveCurrentNote;
+    document.getElementById('closeNoteBtn').onclick = closeModal;
+    window.onclick = (e) => { if(e.target === document.getElementById('noteModal')) closeModal(); };
+
+    loadLocal();
+    const cached = localStorage.getItem('physics_videos_cache');
+    if(cached) {
+        videos = JSON.parse(cached);
+        renderGrid();
+        updateStats();
+    }
+    syncVideos();
 </script>
 </body>
 </html>
